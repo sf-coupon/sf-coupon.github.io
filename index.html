@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<title>活动专属二维码领取</title>
+<style>
+  :root {
+    --ground: #f2f5f4;
+    --card: #ffffff;
+    --ink: #1a2622;
+    --ink-soft: #5c6d67;
+    --line: #dde5e2;
+    --accent: #0e7c66;
+    --accent-ink: #ffffff;
+    --accent-soft: #e2f1ec;
+    --danger: #b3402f;
+    --danger-soft: #f9e9e6;
+    --shadow: 0 12px 32px rgba(23, 43, 38, .10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ground: #101614; --card: #1a2320; --ink: #e6edea; --ink-soft: #93a49e;
+      --line: #2c3934; --accent: #35b394; --accent-ink: #0c1512;
+      --accent-soft: #1e332c; --danger: #e07a63; --danger-soft: #3a231e;
+      --shadow: 0 12px 32px rgba(0, 0, 0, .45);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #101614; --card: #1a2320; --ink: #e6edea; --ink-soft: #93a49e;
+    --line: #2c3934; --accent: #35b394; --accent-ink: #0c1512;
+    --accent-soft: #1e332c; --danger: #e07a63; --danger-soft: #3a231e;
+    --shadow: 0 12px 32px rgba(0, 0, 0, .45);
+  }
+  :root[data-theme="light"] {
+    --ground: #f2f5f4; --card: #ffffff; --ink: #1a2622; --ink-soft: #5c6d67;
+    --line: #dde5e2; --accent: #0e7c66; --accent-ink: #ffffff;
+    --accent-soft: #e2f1ec; --danger: #b3402f; --danger-soft: #f9e9e6;
+    --shadow: 0 12px 32px rgba(23, 43, 38, .10);
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+      "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    background: var(--ground); color: var(--ink);
+    min-height: 100vh; display: flex; align-items: flex-start; justify-content: center;
+    padding: clamp(16px, 5vw, 48px) 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .ticket { width: 100%; max-width: 420px; }
+  .card {
+    background: var(--card); border-radius: 16px; box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 28px 28px 22px;
+    border-bottom: 1px dashed var(--line);
+    position: relative;
+  }
+  /* 票券缺口 */
+  .card-head::before, .card-head::after {
+    content: ""; position: absolute; bottom: -9px; width: 18px; height: 18px;
+    border-radius: 50%; background: var(--ground);
+  }
+  .card-head::before { left: -9px; }
+  .card-head::after { right: -9px; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: .14em; color: var(--accent);
+    font-weight: 600; text-transform: uppercase; margin-bottom: 8px;
+  }
+  h1 { font-size: 22px; font-weight: 700; line-height: 1.35; text-wrap: balance; }
+  .sub { margin-top: 8px; font-size: 14px; color: var(--ink-soft); line-height: 1.6; }
+  .card-body { padding: 24px 28px 28px; }
+  label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .row { display: flex; gap: 10px; }
+  input[type="tel"] {
+    flex: 1; min-width: 0; font-size: 17px; padding: 12px 14px;
+    font-variant-numeric: tabular-nums; letter-spacing: .04em;
+    border: 1.5px solid var(--line); border-radius: 10px;
+    background: var(--card); color: var(--ink); outline: none;
+    transition: border-color .15s;
+  }
+  input[type="tel"]:focus-visible { border-color: var(--accent); }
+  button {
+    font: inherit; font-size: 15px; font-weight: 600;
+    padding: 12px 20px; border: none; border-radius: 10px;
+    background: var(--accent); color: var(--accent-ink); cursor: pointer;
+    transition: opacity .15s; white-space: nowrap;
+  }
+  button:disabled { opacity: .55; cursor: default; }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .msg {
+    margin-top: 14px; font-size: 14px; line-height: 1.6; border-radius: 10px;
+    padding: 10px 14px; display: none;
+  }
+  .msg.error { display: block; background: var(--danger-soft); color: var(--danger); }
+  .msg.info { display: block; background: var(--accent-soft); color: var(--accent); }
+  .result { display: none; text-align: center; padding-top: 6px; }
+  .result.show { display: block; }
+  .result .qr-wrap {
+    display: inline-block; padding: 14px; background: #fff; border-radius: 14px;
+    border: 1px solid var(--line); margin: 6px 0 4px;
+  }
+  .result img { display: block; width: 220px; max-width: 100%; height: auto; }
+  .result .owner {
+    font-size: 13px; color: var(--ink-soft); margin-top: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .result .hint { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
+  .result .actions { margin-top: 16px; display: flex; gap: 10px; justify-content: center; }
+  .ghost {
+    background: transparent; color: var(--accent);
+    border: 1.5px solid var(--accent);
+  }
+  .foot {
+    text-align: center; font-size: 12px; color: var(--ink-soft);
+    margin-top: 18px; line-height: 1.6;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .result.show { animation: rise .35s ease; }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+  }
+</style>
+
+<div class="ticket">
+  <div class="card">
+    <div class="card-head">
+      <div class="eyebrow">专属领取</div>
+      <h1>活动专属二维码领取</h1>
+      <p class="sub">输入报名手机号，领取您的专属二维码（演示版）。</p>
+    </div>
+    <div class="card-body">
+      <div id="form-view">
+        <label for="phone">手机号</label>
+        <div class="row">
+          <input id="phone" type="tel" inputmode="numeric" autocomplete="tel"
+                 maxlength="20" placeholder="请输入报名时的手机号">
+          <button id="claim-btn">领取</button>
+        </div>
+        <div id="msg" class="msg" role="alert"></div>
+      </div>
+      <div id="result" class="result">
+        <div class="qr-wrap"><img id="qr-img" alt="您的专属二维码"></div>
+        <div class="owner" id="owner"></div>
+        <div class="hint">长按图片可保存到相册</div>
+        <div class="actions">
+          <button id="download-btn">保存图片</button>
+          <button id="back-btn" class="ghost">换个手机号</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="foot">每个手机号对应一张专属二维码，重复领取会得到同一张。<br>如遇问题请联系活动负责人。</p>
+</div>
+
+<script id="vault" type="application/json">{"salt":"GEvhqB3q/pYbIj66oN5Z7w==","iter":310000,"entries":{"3149a5ff4b0191f4dfed23e12f61039a":{"d":"wG4NnpUIE6YU/vxQXbN7yo0LigebLPOWbfELu5PvJLmKZHpsyhMMem2d2LZiNvfeGShLTdiGFkhDfRis+hXgK9qyiyJiwljC+JQ0OWyXRlgNarWUolFtvHJm8W8wcq4MK5ThXgt9rDa4+jhOI3ghc/X3f2BQHHXYPaxLmh3k9PeqH0MjFQzKYL21kmjaf/dshy+Itpf/NgADpPAQuDdLq7yXDrXXs7D+nln4j3J6a866+i+IOWsPDRbr3s5nBbpWfW+vrveOiijsgqJMVcA6NFQLn9nKd4a2lIM7+gXY0OvtqGMn4YRzuYdQGjflj62GjsT5LS99p8hseHgTbx2Gq5mC2Txp7c00ze6jF74roPdESpvUQnaLpSuDsJcVQfwJSdpoP7tKl26LE6W8tRsZRXrq4cRDfoNeEDJfk4sLaKhOeXYhuL9h0i+KLl0hU18R+vmvNRKXBNIZ7apYjcmeI3GPaQOaOLz8TAoK6tj1w/zHvqiELq7HjsreokkO4/tZSBPxEWTmsuXG1Yd9OTzES0sC98LgS+qi40+8/TPiQc9oTvePyV3VCXFgbUWpwmjLHVgCIYwCXGKTfJ+px9zH7Bn+PNYiCqroXQ5PUVe7Q/V5edLYggmsvCnYFiW418+fHF4uPJXsYsrxH9WdbXXG6Iw4j2TF8e/3cWeP8Z0OR4oa00NO3dmUvQGcu32vwzQWkrZnTWXvp6/miLX8C9/BF1jRxAByiTChlTHo+Z3oCJ2xjANhLcabSKPCUpNn65TrDuVsfEItnUl98EbEBQ0vc8lEHPS7hH38","m":"image/png"},"a20d98e8bb2f30c74e85c6ff67c10eae":{"d":"y5V0lBpkfR4A/cLR83qkNMMDZ4ECpkFZQk4g8yLaPs0rPsT23VhShy2T8GeCcHw55fJPVw6f8K/mG5vJhvTHP8mUTHHbjLmv4tVz1hsl7uNOrruxbiJKHZ7g4Er8bZEXR3UT0qtmKdOTvij2jH7gYPsNPsEoCwT5+NFSZv4ceECNF0tchrKN78+4zAkf4APDduAQk+jpyWDi2NLdw+//ElPnuTvrLRR32Jto3xU7sjZfabb8rSzRMYl56CqfetoDwg+pEjapJI7JgMklWVgG0ESDf9YFDgFp7PUt2d9DBquhKzV5da0IeRSL0LFQNWaPr1RuQEsoYjhEByjNNnsFtYxw3KjyABb5MvuP3edSQGMP9RyZw96FjMxU26YNfI+30JgEKjj2BfiJh8g2rMnqV0v41Kvh3bO8bIBVnPmDO2cxQe8A5DfGu4r1aRE3bG1b+sEG/HcDZz8Oq9ju+i3WbBCA39BQrKGBf38YgBTSN9c2WLdLRt2XeushWL9BqCHMYSsws1SXblN0tlk4iyWD8ng34pU5ZCDp72pAGiXBO9ylG9X5OP+zbiH/BPS+cui56iEwXE/D1DtmquRIvx/xGiJoVeoCfgpIHRRlRo454a6SHNp70GlEj+Y7LTCqzElYgUmgoD68qqLFrEaIjuTwVwApOB3Klp8NpRFBBHXbKdA6jzz9iWqVPBQaGC2ZcmbjVaCFKZU2DxoPLy7k5oDz8fzeELFeDExdXr5R7wj62dwUWeNbO51wJQMllYiYKGbXpyu0OUUF0hbmxb+GRSNOMolHEwWWajqiM5IVFWq/oK9kuIH/FvzfCasv2/R2F1JE2/0=","m":"image/png"},"be597e5102a0bff8ba5c239b612da2f5":{"d":"RppohIJy/v+YIVxECs7JnLTcpWPK1huW9OZ6nTNqaCiipPKGfBUHfFu38hUIiXMvaH5gpcl7S4HExXfhVv275BX7d0GHDjPWaHDDyU6BpuTPYsuXVq192PRDVhnf7ap0khF52gJP7Q7emJge7TNdt6/tlbbOix6AdYcjldITzDCyVFIGzFE/YixCmXI9N6/jFnnjcE8gKrhlK3MPkol+apieb9H32IfvbzZ/Q9hKrWUTaOpAt4EeGtzU0ppMhTZ/e9u3ihBvNL8bLZCp4KifeKNmi+6mU35xqFqsxiJrddELHUGhX3BQQiTTMHHnnMbbJfR6ifYspHB8b+rh+OTJv1A6ZQnQ3njJiMANxx3I0RMm/GufWzpN45S5sxFfOgwnG/7NV36Ck0FxzGBzWIXolV4a2Fflgg8jbcIub4Bui4zZMX8pye1UaJsyjJrNZo6Yml9h/6E/3YX8a/+65osstxi/3NBk6PgBjOKqbdUeIGNeDhefTO9+p7nWGtWFIEsgur6ykyESHFiLfo7tggeVOQAuwc7T/wtpRaNJ01WW5ic1pBjt2VHYqmQ5nLt0P3xLAW/44BCgC170aFhVnXPNhGV6ABrJDX9gINeNWh8bt5pc+04Av4q2CwMsOHWv9R/tpb6ssD0Tor6BaEGDSvmNzbLBUwfXeJfs9/SW7RAvEYqjjhhIoso2i+0TOC4+suH9Ggk4bgOixKJ6zwey8wMQnfWhagDy3G+xYcEJkvE56r/rw002XTaRm+cnGHOYAQLncuUSAQydTWmT3mtTNo0mo6ui6dP0QPsg42KRsRIWeiDCDi92739lfUWcUsc85m+S6w==","m":"image/png"},"93e4acf2516a1f57e3d235bd2eeeced3":{"d":"h38B5kRT5BL4HGAMBV3CPIZxQGGlzDQHtTlCVKicSirECnXi5vyGEpNW72rd3bxNfJUAgXrHiVW95GDTx85XTY25ry8yGLpvO4hzlZQGvyW3Ra9pAmY7YQ/12zmRC1HQdOintOcmr3iwriEiGeifjmyrN0JFOK8FzN9ALKZd+0Tsqdvzum3tWBUA0C9gWcCIygcz4LocyZX01ne/q7/shtcFO50d5TBWoXnUIeFku05g1MdyPosgiBkbRXTk6mSt0199dLy+OOoSqLXKf6UATewgycS5LWUWK8M0tp91DRCpXg9g7mAC7xS7f4xTKRZ7sSlp2F9DyP40WPKATxt2/rfYNVHTrqSQSpFWOAfaML55qYC+R6ecuR6Pu8rk5IxN9hFwyblx4p65ImjaiH6Rqc8gBNMXEQhBPIY+aUEGc/LCdZCfgeyiLYm8WFpPudK8Hp8hzgVe0Nct0o1RwrCldCGuMVWH0uS/BhYriPOiNbHAt4YykbhudAbV6Q74EL/I9RsOc1frpa/zrZleiXhSWZ0zo9Cu/2bFTzE9oShlI59pBa5Afpl+TX7GrzNPpf7GJbi12hGPqNzkm4AqULfP0vOoB+/XKPNB0jsDWiJIQJk7isvWzcysDguSahYnjRwLX8vO0rQnYXYtKEgRTVvSsLJ+7culkAt+mNy6i5wZX2e+FyEffvvakWrhRzIRB6sR9qlmBMlf4Lb0wVdVEgMMRJyxzdgGXp8akDbQlCHl4LQFyB6eFDhR9rJGGdXa+sYbGhtMCmBIBfsvmHt8zsbt3of9W3PvPWvcdUdkYSyHgm1aQC2zJ8307VKwUHdjEUdb38k=","m":"image/png"},"0db280cfabb9ec4ddb5138fb6ace1bb3":{"d":"kSPwq4+uQHcOpuD0sFb6Ti7WIzsIT2AA4e+H+K6QBHUaCbcfIzUbrD+NQXmVtMHYZo3dGlVQjlLPT3hn+QlQi0zrMxJPwfIie4TfPRWtl69cbaF/S25qq17SJTjuLZvLNtJxWalavdtRyTVwZ97gahb+HXL7gwYt9ToCHxGYBUNW4gVUIo5js4QGN62kHadbBh+kON1VDPH6ndDE5jRoMaPOlNckL8+yJ0rDKuQmJLGfNAlLg3zZEli2Not6COYcsYRY+UVYsEoIWH+FVNXy/bPzSlv1MoKmy5E8rS4tiLJF5ANCRIbJ1qiejDdfb47TKvTM1QagWWxVKMAP51DHJRbviSsgRsthUMBFjAjFTmci90t/lVKhKadXd4L7n1yVMWUi9WXqUzsdkWGn0MQfFsquEvXgu3r2uWcAi0dBo9kaGq/muUjymltlOAqF/SToqsoVPlLfo8ZSp0IYdSE5gZuxuIUmNYDG+UFvdOSluYgzUNxmr52ShDPAXoiIAjAeUfC8ITvU1wOkK7CnnNgY6Rkq1Ny3/RVZ1SW6A0wZ6Re9hLt4n0hcjEH7JJpyzEEOBoN92TrPRt4smktonz8mi0PjBvlr8mSFvwjv5ZCi3pwU9uKNXnGBU6TcsYNmeLgiLWtycZrp0DLwF0V6lkHEtVbu3+qrrqxUMNuXBHZugc3yvTc4BhNqiH/s2ljqft5yXAXiJrLf1nUJWbVj/uBlRdHgvyUZcQkTF9nFusg3sHQrcRE43HHb31U6QBSoewX0zA9VZQhxQhCQ2W+M3jTQv1P8M6iUPjQHxpv5b3DYtilTaDaiEHU6zp0=","m":"image/png"}}}</script>
+<script>
+(function () {
+  var vault = JSON.parse(document.getElementById('vault').textContent);
+  var saltBytes = Uint8Array.from(atob(vault.salt), function (c) { return c.charCodeAt(0); });
+
+  var phoneInput = document.getElementById('phone');
+  var claimBtn = document.getElementById('claim-btn');
+  var msg = document.getElementById('msg');
+  var formView = document.getElementById('form-view');
+  var result = document.getElementById('result');
+  var qrImg = document.getElementById('qr-img');
+  var owner = document.getElementById('owner');
+  var downloadBtn = document.getElementById('download-btn');
+  var backBtn = document.getElementById('back-btn');
+  var currentBlob = null;
+
+  function normalize(raw) {
+    var digits = raw.replace(/\D/g, '');
+    return digits.length > 11 ? digits.slice(-11) : digits;
+  }
+  function showMsg(text, kind) {
+    msg.textContent = text;
+    msg.className = 'msg ' + kind;
+  }
+  function clearMsg() { msg.className = 'msg'; }
+  function toHex(buf) {
+    return Array.prototype.map.call(new Uint8Array(buf), function (b) {
+      return b.toString(16).padStart(2, '0');
+    }).join('');
+  }
+
+  async function deriveMaterial(phone) {
+    var baseKey = await crypto.subtle.importKey(
+      'raw', new TextEncoder().encode(phone), 'PBKDF2', false, ['deriveBits']);
+    return crypto.subtle.deriveBits(
+      { name: 'PBKDF2', hash: 'SHA-256', salt: saltBytes, iterations: vault.iter },
+      baseKey, 8 * 48);
+  }
+
+  async function claim(phone, silent) {
+    if (!/^1\d{10}$/.test(phone) && phone.length !== 11) {
+      // 非典型手机号也允许尝试（境外号等），但空的不行
+      if (!phone) { showMsg('请输入手机号', 'error'); return; }
+    }
+    claimBtn.disabled = true;
+    claimBtn.textContent = '查找中…';
+    clearMsg();
+    try {
+      var material = await deriveMaterial(phone);
+      var index = toHex(material.slice(0, 16));
+      var entry = vault.entries[index];
+      if (!entry) {
+        if (!silent) showMsg('该手机号不在领取名单内，请确认输入是否正确。', 'error');
+        return;
+      }
+      var key = await crypto.subtle.importKey(
+        'raw', material.slice(16, 48), 'AES-GCM', false, ['decrypt']);
+      var packed = Uint8Array.from(atob(entry.d), function (c) { return c.charCodeAt(0); });
+      var plain = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: packed.slice(0, 12) }, key, packed.slice(12));
+      currentBlob = new Blob([plain], { type: entry.m });
+      if (qrImg.src) URL.revokeObjectURL(qrImg.src);
+      qrImg.src = URL.createObjectURL(currentBlob);
+      owner.textContent = '绑定手机号：' + phone.slice(0, 3) + '****' + phone.slice(-4);
+      formView.style.display = 'none';
+      result.classList.add('show');
+      try { localStorage.setItem('claimed_phone', phone); } catch (e) {}
+    } catch (e) {
+      if (!silent) showMsg('解锁失败，请重试。若持续失败请联系活动负责人。', 'error');
+    } finally {
+      claimBtn.disabled = false;
+      claimBtn.textContent = '领取';
+    }
+  }
+
+  claimBtn.addEventListener('click', function () {
+    claim(normalize(phoneInput.value), false);
+  });
+  phoneInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') claim(normalize(phoneInput.value), false);
+  });
+  function anchorDownload(filename) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(currentBlob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+  downloadBtn.addEventListener('click', function () {
+    if (!currentBlob) return;
+    var ext = currentBlob.type.indexOf('jpeg') >= 0 ? 'jpg'
+      : (currentBlob.type.split('/')[1] || 'png');
+    var filename = 'qrcode.' + ext;
+    var dl = window.claude && window.claude.downloads;
+    if (dl) {
+      dl.save({ filename: filename, data: currentBlob }).catch(function (err) {
+        // 用户拒绝或提示排队时不重试；能力不可用时回退到普通下载
+        if (err && (err.code === 'declined' || err.code === 'rate_limited')) return;
+        anchorDownload(filename);
+      });
+    } else {
+      anchorDownload(filename);
+    }
+  });
+  backBtn.addEventListener('click', function () {
+    result.classList.remove('show');
+    formView.style.display = '';
+    phoneInput.value = '';
+    try { localStorage.removeItem('claimed_phone'); } catch (e) {}
+    phoneInput.focus();
+  });
+
+  // 领过的手机号回访时自动展示
+  try {
+    var saved = localStorage.getItem('claimed_phone');
+    if (saved) { phoneInput.value = saved; claim(saved, true); }
+  } catch (e) {}
+
+  if (!window.isSecureContext || !crypto.subtle) {
+    showMsg('当前环境不支持安全解密，请在 HTTPS 页面中打开。', 'error');
+    claimBtn.disabled = true;
+  }
+})();
+</script>
+
+</body>
+</html>
